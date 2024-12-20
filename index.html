@@ -105,7 +105,7 @@
         }
 
         footer {
-            position: absolute;
+            position: fixed;
             bottom: 0;
             width: 100%;
             text-align: center;
@@ -207,26 +207,26 @@
 
 <script>
     const images = [
-        "შერბურის_ქოლგები_1.jpg",
-        "შერბურის_ქოლგები_2.jpg",
-        "შერბურის_ქოლგები_3.jpg",
-        "შერბურის_ქოლგები_4.jpg",
-        "შერბურის_ქოლგები_5.jpg",
-        "შერბურის_ქოლგები_6.jpg",
-        "შერბურის_ქოლგები_7.jpg",
-        "შერბურის_ქოლგები_8.jpg",
-        "შერბურის_ქოლგები_9.jpg",
-        "შერბურის_ქოლგები_10.jpg",
-        "შერბურის_ქოლგები_11.jpg",
-        "შერბურის_ქოლგები_12.jpg",
-        "შერბურის_ქოლგები_13.jpg",
-        "შერბურის_ქოლგები_14.jpg",
-        "შერბურის_ქოლგები_15.jpg",
-        "შერბურის_ქოლგები_16.jpg",
-        "შერბურის_ქოლგები_17.jpg",
-        "შერბურის_ქოლგები_18.jpg",
-        "შერბურის_ქოლგები_19.jpg",
-        "შერბურის_ქოლგები_20.jpg"
+        "images/შერბურის_ქოლგები_1.jpg",
+        "images/შერბურის_ქოლგები_2.jpg",
+        "images/შერბურის_ქოლგები_3.jpg",
+        "images/შერბურის_ქოლგები_4.jpg",
+        "images/შერბურის_ქოლგები_5.jpg",
+        "images/შერბურის_ქოლგები_6.jpg",
+        "images/შერბურის_ქოლგები_7.jpg",
+        "images/შერბურის_ქოლგები_8.jpg",
+        "images/შერბურის_ქოლგები_9.jpg",
+        "images/შერბურის_ქოლგები_10.jpg",
+        "images/შერბურის_ქოლგები_11.jpg",
+        "images/შერბურის_ქოლგები_12.jpg",
+        "images/შერბურის_ქოლგები_13.jpg",
+        "images/შერბურის_ქოლგები_14.jpg",
+        "images/შერბურის_ქოლგები_15.jpg",
+        "images/შერბურის_ქოლგები_16.jpg",
+        "images/შერბურის_ქოლგები_17.jpg",
+        "images/შერბურის_ქოლგები_18.jpg",
+        "images/შერბურის_ქოლგები_19.jpg",
+        "images/შერბურის_ქოლგები_20.jpg"
     ];
 
     let currentImageIndex = 0;
@@ -234,6 +234,7 @@
     let nextClicks = 0;
     let helpClicks = 0;
     let timer = 60;
+    let gameEnded = false;
 
     const correctAnswer = "შერბურის ქოლგები";
 
@@ -258,14 +259,25 @@
         scoreDisplay.textContent = `ქულა: ${score}`;
     }
 
+    function endGame(message) {
+        gameEnded = true;
+        nextButton.disabled = true;
+        helpButton.disabled = true;
+        submitAnswerButton.disabled = true;
+        answerInput.disabled = true;
+        showMessage(message);
+        clearInterval(timerInterval);
+    }
+
     function checkAnswer() {
+        if (gameEnded) return;
+        
         const userAnswer = answerInput.value.trim();
         if (userAnswer === correctAnswer) {
-            showMessage(`შენ გამიმარჯვეე!\nსწორი პასუხი: ${correctAnswer}\nშენ დააგროვე ${score} ქულა!`);
-            nextButton.disabled = true;
-            helpButton.disabled = true;
+            endGame(`გილოცავთ! თქვენ გაიმარჯვეთ!\nსწორი პასუხი: ${correctAnswer}\nთქვენ დააგროვეთ ${score} ქულა!\n\nგადატვირთეთ გვერდი ახალი თამაშისთვის.`);
         } else {
             alert("პასუხი არასწორია, სცადეთ ხელახლა!");
+            updateScore(-2);
         }
     }
 
@@ -275,21 +287,28 @@
         messagePopup.style.display = "block";
         setTimeout(() => {
             messagePopup.style.display = "none";
-        }, 5000);
+        }, 7000);
     }
 
     function updateTimer() {
+        if (gameEnded) return;
+        
         if (timer > 0) {
             timer--;
             timerDisplay.textContent = `დრო: ${timer}`;
+            if (timer <= 10) {
+                timerDisplay.style.color = "red";
+            }
         } else {
-            alert("დრო გასულია!");
+            endGame(`დრო ამოიწურა!\nთქვენ დააგროვეთ ${score} ქულა.\n\nგადატვირთეთ გვერდი ახალი თამაშისთვის.`);
         }
     }
 
     const timerInterval = setInterval(updateTimer, 1000);
 
     nextButton.addEventListener("click", () => {
+        if (gameEnded) return;
+        
         if (currentImageIndex < images.length - 1) {
             currentImageIndex++;
             showImage(currentImageIndex);
@@ -306,6 +325,8 @@
     });
 
     helpButton.addEventListener("click", () => {
+        if (gameEnded) return;
+        
         helpClicks++;
         if (helpClicks === 1) {
             alert("დახმარება: ქოლგა ამ ფილმისთვის.");
@@ -313,15 +334,14 @@
             alert("დახმარება: საფრანგეთი ამ ფილმისთვის.");
         } else {
             alert("თქვენმა დახმარების შესაძლებლობამ ამოიწურა!");
+            helpButton.disabled = true;
         }
         updateScore(-5);
         nextButton.disabled = false;
         nextClicks = 0;
     });
 
-    submitAnswerButton.addEventListener("click", () => {
-        checkAnswer();
-    });
+    submitAnswerButton.addEventListener("click", checkAnswer);
 
     answerInput.addEventListener("keyup", (event) => {
         if (event.key === "Enter") {
@@ -336,7 +356,11 @@
         console.log('QR Code generated!');
     });
 
-    showImage(currentImageIndex);
+    // Initialize game
+    window.onload = function() {
+        showImage(currentImageIndex);
+        movieImage.classList.add("active");
+    };
 </script>
 
 </body>
