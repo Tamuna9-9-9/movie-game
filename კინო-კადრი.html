@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>კინო-კადრი</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #1c1c1c, #333333);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            padding: 15px 0;
+            background: #444;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-bottom: 3px solid #555;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 90%;
+            margin: 20px auto;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        #image-container {
+            width: 600px;
+            height: 400px;
+            background: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        #image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #image-container img.active {
+            opacity: 1;
+        }
+
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: #0078D7;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #005BB5;
+        }
+
+        button:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+
+        #score {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 600px;
+            border: 2px solid #0078D7;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+            background: #444;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .message-popup {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #222;
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            font-size: 20px;
+            z-index: 1000;
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .celebration {
+            font-size: 25px;
+            font-weight: bold;
+            color: #FFD700;
+            margin-top: 20px;
+        }
+
+        .fireworks {
+            display: inline-block;
+            animation: fireworks-animation 2s ease-out infinite;
+        }
+
+        @keyframes fireworks-animation {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+
+        .fireworks::before {
+            content: "🎆🎇🎆";
+            font-size: 40px;
+        }
+
+        #timer {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        #qrcode {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #444;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+</head>
+<body>
+
+<header>
+    კინო-კადრი
+</header>
+
+<div id="game-container">
+    <div id="image-container">
+        <img src="" id="movie-image" alt="ფილმის კადრი">
+    </div>
+
+    <input type="text" id="answer-input" placeholder="შეიყვანეთ ფილმის სახელი">
+
+    <div id="controls">
+        <button id="next-button">შემდეგი</button>
+        <button id="help-button">დახმარება</button>
+        <button id="submit-answer-button">პასუხის დაფიქსირება</button>
+    </div>
+
+    <div id="score">ქულა: 20</div>
+    <div id="timer">დრო: 60</div>
+</div>
+
+<footer>
+    © 2024 კინო-კადრი
+</footer>
+
+<div id="message-popup" class="message-popup">
+    <div id="popup-message"></div>
+    <div id="celebration" class="celebration"></div>
+</div>
+
+<div id="qrcode"></div>
+
+<script>
+    const images = [
+        "შერბურის_ქოლგები_1.jpg",
+        "შერბურის_ქოლგები_2.jpg",
+        "შერბურის_ქოლგები_3.jpg",
+        "შერბურის_ქოლგები_4.jpg",
+        "შერბურის_ქოლგები_5.jpg",
+        "შერბურის_ქოლგები_6.jpg",
+        "შერბურის_ქოლგები_7.jpg",
+        "შერბურის_ქოლგები_8.jpg",
+        "შერბურის_ქოლგები_9.jpg",
+        "შერბურის_ქოლგები_10.jpg",
+        "შერბურის_ქოლგები_11.jpg",
+        "შერბურის_ქოლგები_12.jpg",
+        "შერბურის_ქოლგები_13.jpg",
+        "შერბურის_ქოლგები_14.jpg",
+        "შერბურის_ქოლგები_15.jpg",
+        "შერბურის_ქოლგები_16.jpg",
+        "შერბურის_ქოლგები_17.jpg",
+        "შერბურის_ქოლგები_18.jpg",
+        "შერბურის_ქოლგები_19.jpg",
+        "შერბურის_ქოლგები_20.jpg"
+    ];
+
+    let currentImageIndex = 0;
+    let score = 20;
+    let nextClicks = 0;
+    let helpClicks = 0;
+    let timer = 60;
+
+    const correctAnswer = "შერბურის ქოლგები";
+
+    const movieImage = document.getElementById("movie-image");
+    const answerInput = document.getElementById("answer-input");
+    const helpButton = document.getElementById("help-button");
+    const nextButton = document.getElementById("next-button");
+    const scoreDisplay = document.getElementById("score");
+    const submitAnswerButton = document.getElementById("submit-answer-button");
+    const messagePopup = document.getElementById("message-popup");
+    const popupMessage = document.getElementById("popup-message");
+    const celebration = document.getElementById("celebration");
+    const timerDisplay = document.getElementById("timer");
+
+    function showImage(index) {
+        movieImage.src = images[index];
+        movieImage.classList.add("active");
+    }
+
+    function updateScore(points) {
+        score += points;
+        scoreDisplay.textContent = `ქულა: ${score}`;
+    }
+
+    function checkAnswer() {
+        const userAnswer = answerInput.value.trim();
+        if (userAnswer === correctAnswer) {
+            showMessage(`შენ გამიმარჯვეე!\nსწორი პასუხი: ${correctAnswer}\nშენ დააგროვე ${score} ქულა!`);
+            nextButton.disabled = true;
+            helpButton.disabled = true;
+        } else {
+            alert("პასუხი არასწორია, სცადეთ ხელახლა!");
+        }
+    }
+
+    function showMessage(message) {
+        popupMessage.textContent = message;
+        celebration.innerHTML = "🎆🎇🎆🎆🎇🎆";
+        messagePopup.style.display = "block";
+        setTimeout(() => {
+            messagePopup.style.display = "none";
+        }, 5000);
+    }
+
+    function updateTimer() {
+        if (timer > 0) {
+            timer--;
+            timerDisplay.textContent = `დრო: ${timer}`;
+        } else {
+            alert("დრო გასულია!");
+        }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    nextButton.addEventListener("click", () => {
+        if (currentImageIndex < images.length - 1) {
+            currentImageIndex++;
+            showImage(currentImageIndex);
+            updateScore(-1);
+            nextClicks++;
+
+            if (nextClicks >= 5) {
+                nextButton.disabled = true;
+                alert("თქვენ გამოიყენეთ 5 შესაძლებლობა. დახმარების ღილაკი გააქტიურდა.");
+            }
+        } else {
+            alert("ყველა კადრი უკვე ნანახია!");
+        }
+    });
+
+    helpButton.addEventListener("click", () => {
+        helpClicks++;
+        if (helpClicks === 1) {
+            alert("დახმარება: ქოლგა ამ ფილმისთვის.");
+        } else if (helpClicks === 2) {
+            alert("დახმარება: საფრანგეთი ამ ფილმისთვის.");
+        } else {
+            alert("თქვენმა დახმარების შესაძლებლობამ ამოიწურა!");
+        }
+        updateScore(-5);
+        nextButton.disabled = false;
+        nextClicks = 0;
+    });
+
+    submitAnswerButton.addEventListener("click", () => {
+        checkAnswer();
+    });
+
+    answerInput.addEventListener("keyup", (event) => {
+        if (event.key === "Enter") {
+            checkAnswer();
+        }
+    });
+
+    // Generate QR Code
+    const url = window.location.href;
+    QRCode.toCanvas(document.getElementById('qrcode'), url, function (error) {
+        if (error) console.error(error);
+        console.log('QR Code generated!');
+    });
+
+    showImage(currentImageIndex);
+</script>
+
+</body>
+</html>
